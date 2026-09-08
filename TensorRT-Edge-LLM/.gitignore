@@ -1,0 +1,35 @@
+build/
+build*
+engines/
+onnx*
+feature-spec/
+dist/
+*.egg-info
+*_engine/
+*.engine
+*_onnx/
+__pycache__/
+.vscode
+.nvcode/
+.cache
+data/
+data.tar
+*.csv
+*.tar.gz
+internal/
+*.log
+.DS_Store/
+docs/cpp_docs/
+docs/build/
+docs/source/cpp_api/
+docs/source/cpp_api.rst
+docs/source/python_api.rst
+cpp/kernels/cuteDSLArtifact/
+ci-artifacts/
+# Virtual environment
+venv*/
+# .claude project commands are tracked; ignore only personal/local overrides
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/projects
+.claude/scheduled_tasks.lock

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "captured_at_utc": "2026-08-31T03:18:36.633010+00:00",
+  "project_root": "/home/nvidia/edgeqwen",
+  "kernel": "Linux nvidia-desktop 5.15.148-tegra #1 SMP PREEMPT Tue Jan 7 17:14:38 PST 2025 aarch64 aarch64 aarch64 GNU/Linux",
+  "l4t_release": "# R36 (release), REVISION: 4.3, GCID: 38968081, BOARD: generic, EABI: aarch64, DATE: Wed Jan  8 01:49:37 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
+  "power_mode": "NV Power Mode: 25W\n1",
+  "tegrastats_sample": "Unknown command: --count. Please try again or see --help",
+  "cuda_toolkit": "bash: line 1: nvcc: command not found",
+  "python": "Python 3.10.12",
+  "packages": "dpkg-query: no packages found matching nvidia-jetpack",
+  "edgellm_version": "0.10.0",
+  "engine_precision": "fp16",
+  "visual_model_type": "qwen3_vl",
+  "artifact_sha256": "8150cfe52be9701fc34d44165e76d20b9e74d17f21da32481b51213cd5ec257b  engines/llm/llm.engine\nddf3abc315a9290010e6a430196c3e9dfb89bedfa79b373279e249905f6fb95e  engines/visual/visual.engine\n90cf8f5f339ba7322ce35216a00451f7e375c6549a9d94d19c5c2a06cdc8f880  TensorRT-Edge-LLM/build/libNvInfer_edgellm_plugin.so.1.0",
+  "raw_capture_dir": "/home/nvidia/edgeqwen/closure_runs/environment_20260831"
+}

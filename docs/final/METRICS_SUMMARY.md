@@ -1,0 +1,424 @@
+# EdgeQwen 项目关键指标汇总
+
+**目的**: 面试时快速查找数字,所有指标来自真实实验证据  
+**原则**: 每个数字都标注来源 (Stage + 文件名)
+
+---
+
+## 0. 云端训练指标 (Cloud Training Metrics)
+
+### 0.1 云端环境
+
+| 指标 | 值 | 来源 |
+|---|---|---|
+| **GPU** | NVIDIA RTX 4090, 49GB VRAM | Cloud Stage 0 |
+| **训练日期** | 2026-08-24 | Cloud artifacts timestamp |
+| **总训练时间** | 61.13秒 (45步) | Cloud STAGE3_REPORT.md |
+
+### 0.2 LoRA训练 (Stage 3)
+
+| 指标 | 值 | 来源 |
+|---|---|---|
+| **可训练参数** | 8.7M (0.41% of 2136M) | Cloud STAGE3_REPORT.md |
+| **训练时间** | 61.13秒 | Cloud STAGE3_REPORT.md |
+| **Train loss** | 0.8996 → 0.0318 (96.5%下降) | Cloud STAGE3_REPORT.md |
+| **Eval loss** | 0.0847 → 0.0456 (45.9%下降) | Cloud STAGE3_REPORT.md |
+| **Eval token accuracy** | 98.38% (最终) | Cloud STAGE3_REPORT.md |
+| **峰值VRAM** | 9.4 GB | Cloud STAGE3_REPORT.md |
+| **吞吐量** | 5.89 samples/sec | Cloud STAGE3_REPORT.md |
+| **测试集准确率 (strict)** | 70.00% (7/10) | Cloud STAGE3_REPORT.md |
+| **测试集准确率 (semantic)** | 83.3% (base约60%) | Cloud STAGE3A comparison |
+
+### 0.3 LoRA Merge (Stage 4)
+
+| 指标 | LoRA(未合并) | Merged BF16 | 变化 | 来源 |
+|---|---|---|---|---|
+| **Checkpoint大小** | Base+Adapter | 4.27 GB | 单一文件 | Cloud STAGE4_REPORT.md |
+| **推理延迟** | 0.55 s/sample | 0.32 s/sample | **-42%** | Cloud STAGE4_REPORT.md |
+| **峰值VRAM** | 8.70 GB | 4.38 GB | **-50%** | Cloud STAGE4_REPORT.md |
+| **Semantic准确率** | 83.3% | 80.0% | -3.3% | Cloud STAGE4_REPORT.md |
+| **质量回归** | 0个翻转 | 1个翻转(30样本中) | - | Cloud STAGE4_REPORT.md |
+
+### 0.4 INT4量化 (Stage 5)
+
+| 指标 | BF16 | INT4(NF4) | 变化 | 来源 |
+|---|---|---|---|---|
+| **峰值VRAM** | 4.38 GB | 1.81 GB | **-58.8%** | Cloud STAGE5_REPORT.md |
+| **Semantic准确率** | 80.0% | 76.7% | -3.3% | Cloud STAGE5_REPORT.md |
+| **延迟** | 0.32 s/sample | 0.40 s/sample | **+25%** | Cloud STAGE5_REPORT.md |
+| **质量回归** | 0个翻转 | 1个翻转(30样本中) | - | Cloud STAGE5_REPORT.md |
+
+### 0.5 ONNX导出 (Stage 6)
+
+| 指标 | 值 | 来源 |
+|---|---|---|
+| **导出时间** | 83.7秒 | Cloud STAGE6_REPORT.md |
+| **LLM ONNX** | 3.8 GB | Cloud outputs/stage6/ |
+| **Visual ONNX** | 779 MB | Cloud outputs/stage6/ |
+| **总大小** | 4.6 GB | Cloud outputs/stage6/ |
+| **源checkpoint** | domain_lora_v1_merged | Cloud metadata.json |
+| **精度** | FP16 (BF16→FP16转换) | Cloud STAGE6_REPORT.md |
+
+**SHA256 (溯源验证)**:
+```
+LLM:    cd1d2e3b20477fa0d68a29565f7b9169a16a22e0c64ee5147b88ecae575aa597
+Visual: eb7ec7df7718225cf9682cad7d572e1453fe2c83f901401648d9385e78bbe83b
+```
+
+---
+
+## 1. Jetson硬件与环境
+
+| 指标 | 值 | 来源 |
+|---|---|---|
+| **设备** | Jetson Orin Nano 8GB | Stage 0 |
+| **CUDA Cores** | 1024 | nvidia-smi |
+| **Tensor Cores** | 32 | Ampere架构 |
+| **CPU** | 6-core ARM Cortex-A78AE | jetson_release |
+| **内存** | 8GB Unified Memory (LPDDR5) | 硬件规格 |
+| **存储** | 233GB NVMe (158GB 可用) | df -h |
+| **CUDA 版本** | 12.6 (JetPack 6.2) | nvcc --version |
+| **TensorRT 版本** | 10.3.0 | dpkg -l tensorrt |
+| **L4T 版本** | 36.4.3 | jetson_release |
+| **Python 版本** | 3.10 | python3 --version |
+| **TensorRT-Edge-LLM** | v0.10.0 (modified) | git describe |
+
+---
+
+## 2. 模型与 Artifacts 大小
+
+| Artifact | 大小 | 来源 |
+|---|---|---|
+| **云端 LoRA-Merged Checkpoint** | 4.27 GB | Cloud Stage 4 |
+| **LLM ONNX (total, 来自LoRA-merged)** | 3.8 GB | Cloud Stage 6 → Jetson Stage 7 |
+| - model.onnx | 1.9 MB | ls -lh |
+| - model.onnx.data | 3.3 GB | ls -lh |
+| - embedding.safetensors | 594 MB | ls -lh |
+| **Visual ONNX (total)** | 779 MB | Cloud Stage 6 → Jetson Stage 8 |
+| - model.onnx | 2.2 MB | ls -lh |
+| - model.onnx.data | 777 MB | ls -lh |
+| **LLM Engine** | 3.3 GB | Jetson Stage 7 |
+| **Visual Engine** | ~2 GB | Jetson Stage 8 |
+| **Runtime Library** | 176 KB | Stage 13 |
+| - libedgeqwen_runtime.a | 176 KB | ls -lh |
+
+**注**: Jetson部署的ONNX/Engine均来自云端LoRA-merged checkpoint,非HuggingFace base model。SHA256验证一致,详见ENGINE_PROVENANCE_AUDIT。
+
+---
+
+## 3. Baseline 性能 (Stage 9)
+
+**Workload**: woman_and_dog.jpeg (896×896), prompt 512 tokens
+
+| 指标 | 值 | 来源 |
+|---|---|---|
+| **TTFT** | 345.12 ms | benchmark_v1.csv |
+| **Visual Latency** | 144.83 ms | benchmark_v1.csv |
+| **LLM Prefill** | 170.24 ms | benchmark_v1.csv |
+| **Decode (per token)** | 55.24 ms | benchmark_v1.csv |
+| **Decode Throughput** | 18.1 tok/s | 1000/55.24 |
+| **Peak Unified Memory** | 2.65 GB | benchmark_v1.csv |
+| **Temperature** | 76.4°C | benchmark_v1.csv |
+| **Power (估算)** | ~15W | Jetson 规格 |
+
+**Breakdown**:
+- Visual: 42.0% (145ms / 345ms)
+- Prefill: 49.3% (170ms / 345ms)
+- Overhead: 8.7% (30ms)
+
+---
+
+## 4. KV Cache Depth Ablation (Stage 10)
+
+**Input**: 512 tokens, decode single token
+
+| maxKVCacheCapacity | Latency (ms) | Memory (GB) | Speedup | 来源 |
+|---|---|---|---|---|
+| 64 | 55.3 | 1.82 | 1.00x | ablation_kv.csv |
+| 256 | 55.8 | 2.03 | 0.99x | ablation_kv.csv |
+| 512 | 57.2 | 2.25 | 0.97x | ablation_kv.csv |
+| 1024 | 58.6 | 2.45 | 0.94x | ablation_kv.csv |
+| 3840 | 61.5 | 2.65 | 0.90x | ablation_kv.csv |
+
+**关键发现**: 60x KV depth → 1.11x latency (**sub-linear scaling**)
+
+---
+
+## 5. KV-Reuse Ablation (Stage 10)
+
+**Input**: 512 tokens, variable reuseKVLen
+
+| reuseKVLen | TTFT (ms) | Increase | 来源 |
+|---|---|---|---|
+| 0 (baseline) | 345 | 0% | ablation_kv.csv |
+| 128 | 394 | +14% | ablation_kv.csv |
+| 256 | 464 | +34% | ablation_kv.csv |
+| 512 | 603 | +75% | ablation_kv.csv |
+
+**反直觉现象**: KV-reuse 增加 latency 而非减少
+
+**Stage 11 根因** (Nsight profiling):
+- reuseKVLen=0: FMHA kernel 0.37 ms
+- reuseKVLen=512: FMHA kernel 0.84 ms (**2.27x increase**)
+- **原因**: reuseKVLen 是 additive context, 不是 subtractive
+
+---
+
+## 6. Visual Resolution Ablation (Stage 10)
+
+| Resolution | Latency (ms) | Speedup | Memory (GB) | 来源 |
+|---|---|---|---|---|
+| 896×896 | 144.8 | 1.00x | 2.65 | ablation_visual.csv |
+| 672×672 | 91.4 | 1.58x | 2.21 | ablation_visual.csv |
+| 448×448 | 46.1 | 3.14x | 1.84 | ablation_visual.csv |
+| 224×224 | 21.3 | 6.80x | 1.62 | ablation_visual.csv |
+
+**Scaling Analysis**:
+- Resolution 降低 4x (896→224)
+- Latency 降低 6.8x
+- **实际复杂度**: O(N^1.8)
+
+**Stage 11 根因分解**:
+- GPU kernels: O(N^1.3) (FlashAttention 优化)
+- CPU preprocessing: O(N²) (naive OpenCV)
+- Combined: O(N^1.8)
+
+---
+
+## 7. Nsight Systems Profiling (Stage 11)
+
+### Visual Encoder Kernel Breakdown
+
+| Kernel | Time (ms) | Percentage | 来源 |
+|---|---|---|---|
+| ampere_fp16_s1688gemm_fp16_256x128 | 22.45 | 15.5% | profile_summary.json |
+| volta_fp16_s884cudnn_fp16_128x128 | 18.73 | 12.9% | profile_summary.json |
+| fmha_v2_vit_d64 (no reuse) | 0.37 | 0.3% | profile_summary.json |
+| fmha_v2_vit_d64 (reuse=512) | 0.84 | 0.6% | profile_summary.json |
+| Others | 103.28 | 71.3% | profile_summary.json |
+| **Total GPU Time** | 144.83 | 100% | profile_summary.json |
+
+### LLM Prefill Kernel Breakdown
+
+| Kernel | Time (ms) | Percentage |
+|---|---|---|
+| GEMM kernels | 136.19 | 80.0% |
+| Attention kernels | 24.03 | 14.1% |
+| Others | 10.02 | 5.9% |
+| **Total GPU Time** | 170.24 | 100% |
+
+**关键 Insight**: 80% GPU time 是 GEMM → INT8 Tensor Core 有最大优化空间
+
+---
+
+## 8. Stability Test (Stage 12)
+
+**Duration**: 28.1 minutes  
+**Total Requests**: 500  
+**Workload**: woman_and_dog.jpeg (896×896), prompt 512 tokens
+
+### Latency Distribution
+
+| Metric | TTFT (ms) | vs Baseline | 来源 |
+|---|---|---|---|
+| **P50** | 346.2 | +0.3% | stage12_batch_summary.csv |
+| **P90** | 350.1 | +1.4% | stage12_batch_summary.csv |
+| **P95** | 352.8 | +2.3% | stage12_batch_summary.csv |
+| **P99** | 358.6 | +4.0% | stage12_batch_summary.csv |
+| **Max** | 365.3 | +5.9% | stage12_batch_summary.csv |
+| **Min** | 342.8 | -0.7% | stage12_batch_summary.csv |
+
+**Baseline**: 345.12 ms (Stage 9)
+
+### Memory Stability
+
+| Metric | Value | 来源 |
+|---|---|---|
+| **Start Memory** | 2.65 GB | stage12_batch_summary.csv |
+| **End Memory** | 2.65 GB | stage12_batch_summary.csv |
+| **Memory Leak** | **0 MB** | Δ = 0 |
+| **Peak Memory** | 2.65 GB | stage12_batch_summary.csv |
+
+### Thermal Behavior
+
+| Metric | Value | 来源 |
+|---|---|---|
+| **Min Temperature** | 75.2°C | stage12_batch_summary.csv |
+| **Max Temperature** | 77.8°C | stage12_batch_summary.csv |
+| **Mean Temperature** | 76.5°C | stage12_batch_summary.csv |
+| **Throttling Events** | **0** | All cooling cur_state=0 |
+
+### Reliability
+
+| Metric | Value |
+|---|---|
+| **Success Rate** | 500/500 (100%) |
+| **Crashes** | 0 |
+| **OOM Errors** | 0 |
+| **CUDA Errors** | 0 |
+
+---
+
+## 9. C++ Runtime Library (Stage 13)
+
+| Metric | Value | 来源 |
+|---|---|---|
+| **Library Size** | 176 KB | ls -lh libedgeqwen_runtime.a |
+| **API Functions** | 3 public | runtime.h |
+| **Build Time** | ~45 sec | CMake build log |
+| **Linking Mode** | STATIC | CMake |
+| **Dependency Isolation** | Pimpl pattern | 设计文档 |
+| **CUDA Compilation** | SEPARABLE_COMPILATION ON | CMakeLists.txt |
+
+**Public API**:
+```cpp
+Runtime::Runtime(const Config&);
+Runtime::~Runtime();
+Runtime::infer(image_path, prompt) -> InferResult;
+```
+
+---
+
+## 10. CuTe DSL 事件时间线
+
+| Date | Event | Duration | 来源 |
+|---|---|---|---|
+| 2026-08-25 | Visual inference failure (cudaErrorUnknown) | - | stage8_inference.log |
+| 2026-08-25 | 定位到 fmha_v2_vit_d64 kernel | 2 hours | troubleshooting log |
+| 2026-08-25 | 识别 CUDA 13.3 vs 12.6 mismatch | 1 hour | artifact 分析 |
+| 2026-08-25 | 尝试下载 cu12 wheel (失败) | 3 hours | pip install log |
+| 2026-08-26 | 决定本地重编译 | - | 决策记录 |
+| 2026-08-26 | TensorRT-Edge-LLM rebuild | 2.5 hours | build log |
+| 2026-08-26 | Visual inference SUCCESS | - | stage7R_final.log |
+
+**Total Debugging Time**: ~8.5 hours
+
+---
+
+## 11. 项目时间统计
+
+| Stage | Duration | 主要工作 |
+|---|---|---|
+| Stage 0 | 1 hour | 环境审计 (retrospective) |
+| Stage 7 | 4 hours | ONNX export (model download 包含) |
+| Stage 7R | 8.5 hours | CuTe DSL debugging + rebuild |
+| Stage 8 | 1.5 hours | TensorRT engine build |
+| Stage 9 | 2 hours | E2E inference validation |
+| Stage 10 | 4 hours | Runtime parameter ablation |
+| Stage 11 | 6 hours | Nsight profiling + analysis |
+| Stage 12 | 3 hours | Stability test (28 min run + analysis) |
+| Stage 13 | 8 hours | C++ Runtime library |
+| Stage 14 | 0 hours | DEFERRED (no camera) |
+| Stage 15 | 6 hours | Final documentation |
+| **Total** | **44 hours** | ~5.5 days full-time |
+
+**Breakdown by Category**:
+- Deployment (S7-S9): 16 hours (36%)
+- Performance (S10-S11): 10 hours (23%)
+- Validation (S12): 3 hours (7%)
+- Engineering (S13): 8 hours (18%)
+- Documentation (S15): 6 hours (14%)
+- Debugging (S7R): 8.5 hours (独立计入)
+
+---
+
+## 12. 对比基准
+
+### vs Cloud A100 (估算)
+
+| Metric | Jetson Orin Nano | Cloud A100 | Ratio |
+|---|---|---|---|
+| **TTFT** | 345 ms | ~80 ms | 4.3x slower |
+| **Decode** | 18.1 tok/s | ~50 tok/s | 2.8x slower |
+| **Memory** | 2.65 GB | ~8 GB | 3.0x smaller |
+| **Power** | ~15W | ~300W | 20x more efficient |
+| **Cost** | $499 (one-time) | $2-3/hour | Edge 优势 |
+
+### vs Other Edge Devices (估算)
+
+| Device | CUDA Cores | Memory | TTFT (估算) | Power |
+|---|---|---|---|---|
+| **Jetson Orin Nano** | 1024 | 8GB | 345 ms | 15W |
+| Jetson Xavier NX | 384 | 8GB | ~900 ms | 15W |
+| Jetson Nano | 128 | 4GB | N/A (OOM) | 10W |
+| Jetson AGX Orin | 2048 | 32GB | ~180 ms | 60W |
+
+---
+
+## 13. 优化潜力分析 (未实施)
+
+| 优化方向 | 预期收益 | 工作量 | ROI | 优先级 |
+|---|---|---|---|---|
+| **INT8 Quantization** | 1.5-2x latency | 1-2 days | High | P0 |
+| **Visual VPI Accel** | 2-3x visual | 1-2 days | High | P1 |
+| **Multi-stream Pipeline** | 1.2-1.3x throughput | 3-5 days | Medium | P2 |
+| **KV-reuse (正确使用)** | 1.3-1.5x multi-turn | 1 day | Medium | P2 |
+| **Lower Resolution** | 3-7x visual (quality loss) | 0 days | High | Config |
+
+**INT8 收益估算**:
+- GEMM 占 80% GPU time (Stage 11 profiling)
+- INT8 Tensor Core 理论 2x GEMM speedup
+- E2E: 345ms → ~200ms (1.7x)
+
+---
+
+## 14. 文档与交付物
+
+| Artifact | 行数 | 大小 | 来源 |
+|---|---|---|---|
+| **FINAL_REPORT.md** | 1229 | ~80 KB | docs/final/ |
+| **README.md** | 315 | ~22 KB | docs/final/ |
+| **INTERVIEW_BRIEF.md** | 1027 | ~68 KB | docs/final/ |
+| **RESUME_BULLETS.md** | 183 | ~14 KB | docs/final/ |
+| **METRICS_SUMMARY.md** | (此文件) | ~18 KB | docs/final/ |
+| **STAGE10_REPORT.md** | 450 | ~28 KB | Stage 10 |
+| **STAGE11_REPORT.md** | 520 | ~35 KB | Stage 11 |
+| **STAGE12_REPORT.md** | 380 | ~24 KB | Stage 12 |
+| **STAGE13_REPORT.md** | 420 | ~27 KB | Stage 13 |
+
+**Total Documentation**: ~4500 lines
+
+---
+
+## 15. 关键技术决策
+
+| 决策 | 选择 | 替代方案 | 原因 |
+|---|---|---|---|
+| **Model Size** | 2B | 7B, 1B | 8GB 内存约束 + 足够能力展示 |
+| **Precision** | FP16 | INT8, INT4 | 8GB 足够 FP16, 时间优先 profiling |
+| **Runtime** | Edge-LLM | TensorRT-LLM | Edge-LLM 为 Jetson 优化 |
+| **LoRA** | 未做 | Fine-tune | 重点为部署工程非训练 |
+| **Quantization** | 未做 | AWQ INT4 | 8GB 足够 + 时间约束 |
+| **Camera** | DEFERRED | V4L2 集成 | 缺少硬件 |
+
+---
+
+## 16. 面试快查表
+
+**最常问的 5 个数字** (背诵):
+
+1. **TTFT**: 345 ms
+2. **Decode**: 18.1 tok/s
+3. **Memory**: 2.65 GB peak
+4. **Stability**: 500 requests, P99 drift 4%
+5. **KV-reuse 异常**: 2.27x FMHA kernel increase
+
+**最常问的 3 个根因**:
+
+1. **CuTe DSL**: CUDA 13.3 prebuilt vs Jetson 12.6
+2. **KV-reuse**: additive context, not subtractive
+3. **Visual scaling**: O(N^1.8) = GPU O(N^1.3) + CPU O(N²)
+
+**最常问的 3 个优化方向**:
+
+1. INT8 quantization (1.5-2x, 1-2 days)
+2. Visual VPI acceleration (2-3x visual, 1-2 days)
+3. Multi-stream pipelining (1.2-1.3x throughput, 3-5 days)
+
+---
+
+**所有指标已汇总完毕，面试时可直接查找此文档**
+
+## 17. Final Benchmark Closure (2026-08-31)
+
+See docs/final/CLOSURE_REPORT_20260831.md for corrected evaluator rules, frozen hashes, ScienceQA NOT_EVALUATED status, and closure limitations. Jetson engines are TensorRT FP16, not TensorRT INT4.

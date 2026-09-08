@@ -1,0 +1,48 @@
+# Large model files and engines
+engines/
+models/
+onnx/
+
+# Build artifacts
+build/
+*.o
+*.a
+*.so
+
+# Logs and profiles
+logs/
+*.log
+profiles/
+profile_summary.json
+
+# Benchmark data and results (keep structure, ignore large outputs)
+benchmark/outputs/
+benchmark/results/
+benchmark/*.json
+benchmark/*.csv
+
+# Closure runs
+closure_runs/
+
+# Plots (keep a few examples manually)
+plots/*.png
+plots/*.jpg
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# OS files
+.DS_Store
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+
+# Test outputs
+test_output*.json
